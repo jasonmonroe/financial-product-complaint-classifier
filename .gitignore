@@ -1,0 +1,7 @@
+# .gitignore
+# ------------------ #
+.DS_Store
+.idea
+
+data/dataset.csv
+data/seeder_data.csv
