@@ -1,0 +1,12 @@
+# requirements.txt
+# This file lists the Python dependencies for the project.
+
+argparse
+
+torch
+evaluate
+pandas  
+numpy  
+torch
+sklearn
+scikit-learn
