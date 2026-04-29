@@ -10,17 +10,17 @@
 import math
 import re
 import time
-import config
+from src.config import SEED, PRODUCT_LABELS
 
 import pandas as pd
 
 # Returns shuffle data with entire row set.
 def shuffle_data(df):
-    return df.sample(frac=1, random_state=config.SEED).reset_index(drop=True)
+    return df.sample(frac=1, random_state=SEED).reset_index(drop=True)
 
 # Returns sample data of x size from input data.
 def create_sample_data(size: int, df):
-    return df.sample(n=size, random_state=config.SEED)
+    return df.sample(n=size, random_state=SEED)
 
 # Outputs banner for readability
 def show_banner(title: str = ''):
@@ -81,7 +81,7 @@ def get_labels():
     Note: We will initialize it here but override once we load the actual data.
     """
 
-    product_labels = config.PRODUCT_LABELS
+    product_labels = PRODUCT_LABELS
     label_pattern = '|'.join(product_labels)
     labels_str = ', '.join(product_labels)
 

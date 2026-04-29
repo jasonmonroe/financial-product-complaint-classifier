@@ -17,10 +17,10 @@ def init_model():
     # Download the model from Hugging Face Hub and get the local path.
     return hf_hub_download(repo_id=MODEL_PATH, filename=MODEL_BASENAME)
 
-def llama():
-    # Load and create an instance of the Llama c++ model.
+def llama() -> Llama:
+    """Initializes and returns the Llama model instance with configured attributes."""
     return Llama(
-        MODEL_PATH=init_model(),
+        model_path=init_model(),
         n_threads=MODEL_ATTRS['cpu_cores'],     # CPU cores
         n_batch=MODEL_ATTRS['batch_size'],      # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
         n_gpu_layers=MODEL_ATTRS['gpu_layers'], # Change this value based on your model and your GPU VRAM pool.
@@ -37,7 +37,7 @@ def format_zero_shot_prompt(system_message: str, user_input: str, zero_shot_prom
     return prompt
 
 # Generate prompt response with Mistral.
-def generate_zero_shot_mistral_response(llm, system_message: str, input_text: str, template: str) -> str:
+def generate_zero_shot_mistral_response(llm: Llama, system_message: str, input_text: str, template: str) -> str:
     prompt = format_zero_shot_prompt(system_message, input_text, template)
     return generate_prompt_response(llm, prompt)
 
@@ -92,7 +92,7 @@ def format_few_shot_prompt(few_shot_prompt: str, new_review: str, prediction_tem
     return few_shot_prompt + prediction_template.format(user_input=new_review)
 
 # Generate prompt response with Mistral
-def generate_few_shot_mistral_response(llm, few_shot_prompt: str, input_text: str, prediction_template: str) -> str:
+def generate_few_shot_mistral_response(llm: Llama, few_shot_prompt: str, input_text: str, prediction_template: str) -> str:
     prompt = format_few_shot_prompt(few_shot_prompt, input_text, prediction_template)
     return generate_prompt_response(llm, prompt)
 
@@ -103,7 +103,7 @@ def get_few_shot_mistral_response(llm, narratives, few_shot_context: str, predic
 
 # Generate response from prompt.  This will handle zero and few shot responses.
 # Mistral model extends from Llama (model).
-def generate_prompt_response(llm, prompt: str) -> str:
+def generate_prompt_response(llm: Llama, prompt: str) -> str:
     response = llm(
         prompt=prompt,
         max_tokens=MISTRAL_ATTRS['max_tokens'],
@@ -135,55 +135,10 @@ def evaluate_score(test_data, scorer, bert_score=False):
             rescale_with_baseline=True,
             model_type=BERT_SCORE_MODEL
         )
-
-        f1_score_sum = sum(score['f1'])
-        f1_score_len = len(score['f1'])
-
-        return f1_score_sum / f1_score_len
+        return sum(score['f1']) / len(score['f1'])
 
     return scorer.compute(
         predictions=model_predictions,
         references=ground_truths,
         model_type=BERT_SCORE_MODEL
     )
-
-    """
-    Return the ROUGE score or BERTScore for predictions on gold examples
-    For each example we make a prediction using the prompt.
-    Gold summaries and the AI generated summaries are aggregated into lists.
-    These lists are used by the corresponding scorers to compute metrics.
-    Since BERTScore is computed for each candidate-reference pair, we take the
-    average F1 score across the gold examples.
-
-    Args:
-        prompt (List): list of messages in the Open AI prompt format
-        gold_examples (str): JSON string with list of gold examples
-        scorer (function): Scorer function used to compute the ROUGE score or the
-                           BERTScore
-        bert_score (boolean): A flag variable that indicates if BERTScore should
-                              be used as the metric.
-
-    Output:
-        score (float): BERTScore or ROUGE score computed by comparing model predictions
-                       with ground truth
-    """
-
-    model_predictions = test_data['mistral_response'].tolist()
-    ground_truths = test_data['summary'].tolist()
-
-    if bert_score:
-        score = scorer.compute(
-            predictions=model_predictions,
-            references=ground_truths,
-            lang="en",
-            rescale_with_baseline=True,
-            model_type=BERT_SCORE_MODEL  # added!
-        )
-
-        return sum(score['f1']) / len(score['f1'])
-    else:
-        return scorer.compute(
-            predictions=model_predictions,
-            references=ground_truths,
-            model_type=BERT_SCORE_MODEL  # added!
-        )

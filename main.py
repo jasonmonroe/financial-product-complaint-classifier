@@ -78,10 +78,6 @@ def run_main_pipeline(seed_data: bool = False):
 
     df = load_data()
 
-    # Randomly select 30 rows as test data.
-    #random_data = df.sample(n=config.TEST_DATA_SIZE, random_state=config.SEED)
-
-
     # Importing Libraries and Mistral Model
     # Load and create an instance of the Llama c++ model.
     lcpp_llm = llama()

@@ -2,9 +2,8 @@
 
 import pandas as pd
 
-import config
-import seeder
-
+from src import seeder
+from src import config
 
 def load_data(seed_data: bool = False) -> pd.DataFrame:
     # Load the data from the csv file.
