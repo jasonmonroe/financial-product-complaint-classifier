@@ -12,6 +12,8 @@ import re
 import time
 import config
 
+import pandas as pd
+
 # Returns shuffle data with entire row set.
 def shuffle_data(df):
     return df.sample(frac=1, random_state=config.SEED).reset_index(drop=True)
@@ -53,7 +55,6 @@ def output_timer(start_time: float, title: str):
     show_banner(title)
     print(f"Run Time: {formatted_time}.\n")
 
-
 # Function looks for a category label and extracts it.
 def extract_category(text):
     # Define the regex pattern to match "category:" or "Category:" followed by a word
@@ -66,6 +67,7 @@ def extract_category(text):
     if match:
         return match.group(1)
     else:
+        label_pattern, _ = get_labels()
         pattern1 = r'(' + label_pattern + ')'
         match = re.search(pattern1, text, re.IGNORECASE)
         if match:
@@ -73,20 +75,17 @@ def extract_category(text):
         else:
             return ''
 
-
-"""
-Product Labels - these are the values in the product column in the dataset.
-Note: We will initialize it here but override once we load the actual data.
-"""
-
-
 def get_labels():
+    """
+    Product Labels - these are the values in the product column in the dataset.
+    Note: We will initialize it here but override once we load the actual data.
+    """
+
     product_labels = config.PRODUCT_LABELS
     label_pattern = '|'.join(product_labels)
     labels_str = ', '.join(product_labels)
 
     return label_pattern, labels_str
-
 
 def get_unique_product_labels(data):
     # Get unique product categories from the dataset.
@@ -148,8 +147,12 @@ def display_match_results(matches):
 # Create a dataframe set of examples of each product category for training data.
 # This will be used for few shot prompting.
 def create_examples_df(data: pd.DataFrame, size: int, is_shuffle: bool = False) -> pd.DataFrame:
-    # Create reviews by extracting all rows by product. Then create examples for each product label.
+    """
+    Creates a training set by sampling 'size' examples from each unique product category.
+    """
     examples = {}
+    labels, _, _ = get_unique_product_labels(data)
+
     for label in labels:
         reviews = data[data['product'] == label]
 
@@ -162,8 +165,7 @@ def create_examples_df(data: pd.DataFrame, size: int, is_shuffle: bool = False) 
     examples_df = pd.concat(labels_list)
 
     # Shuffle the data one more time if flag is true
-    if is_shuffle == True:
+    if is_shuffle:
         examples_df = shuffle_data(examples_df)
 
     return examples_df
-

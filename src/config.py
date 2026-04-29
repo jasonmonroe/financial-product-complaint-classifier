@@ -1,9 +1,9 @@
 # src/config.py
 
-import random
-
 # --- Constants ---
 BERT_SCORE_MODEL = 'distilbert-base-uncased'
+
+DISPLAY_WIDTH = 256
 
 # This will be the seed value for generating random data.
 # RANDOM_STATE_NUM = random.randint(1, 100)
@@ -19,8 +19,6 @@ TRAINING_DATA_SIZE = 50 # Number of rows for training.
 
 # Files
 CONTENT_PATH = '/data/'
-# GOOGLE_DRIVE_PATH = 'MyDrive/Colab Notebooks/GA-NLP/project-01/'
-
 csv_file_path = CONTENT_PATH
 csv_file_name = 'Complaints_classification.csv'
 
