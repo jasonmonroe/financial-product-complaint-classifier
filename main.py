@@ -70,102 +70,6 @@ Run the exploratory data analysis (EDA) pipeline to understand the dataset and p
 Add seeder data to dataset to create a few-shot prompt for the text classification task.
 """
 
-"""
-Product Labels - these are the values in the product column in the dataset.
-Note: We will initialize it here but override once we load the actual data.
-"""
-
-
-def get_labels():
-    product_labels = config.PRODUCT_LABELS
-    label_pattern = '|'.join(product_labels)
-    labels_str = ', '.join(product_labels)
-
-    return label_pattern, labels_str
-
-
-def get_unique_product_labels(data):
-    # Get unique product categories from the dataset.
-    labels = data['product'].unique()
-    label_pattern = '|'.join(labels)
-    labels_str = ', '.join(labels)
-
-    return labels, label_pattern, labels_str
-
-
-# Create matches matrix to compare values of each column to gauge accuracy.
-def create_match_results(new_data):
-    # Count columns that match per row to compare which results match the actual product.
-    total_rows = new_data.shape[0]
-    print(f'Total Rows: {total_rows}')
-
-    matches = {
-        'product_v_response': {},
-        'product_v_response_cleaned': {},
-        'response_v_response_cleaned': {},
-        'all_3': {}
-    }
-
-    # Count matches
-    matches['product_v_response']['cnt'] = (new_data['product'] == new_data['mistral_response']).sum()
-    matches['product_v_response_cleaned']['cnt'] = (new_data['product'] == new_data['mistral_response_cleaned']).sum()
-    matches['response_v_response_cleaned']['cnt'] = (
-            new_data['mistral_response'] == new_data['mistral_response_cleaned']).sum()
-    matches['all_3']['cnt'] = ((new_data['product'] == new_data['mistral_response']) & (
-            new_data['mistral_response'] == new_data['mistral_response_cleaned'])).sum()
-
-    # Calculate match percentages
-    for key in matches:
-        matches[key]['pct'] = matches[key]['cnt'] / total_rows
-
-    return matches
-
-
-# Convert to DataFrame for display
-def display_match_results(matches):
-    # Define the human-readable labels
-    match_labels = {
-        'product_v_response': 'Product & Mistral Response',
-        'product_v_response_cleaned': 'Product & Cleaned Mistral Response',
-        'response_v_response_cleaned': 'Mistral Response & Cleaned Mistral Response',
-        'all_3': 'Product & Mistral Response & Cleaned Mistral Response'
-    }
-
-    # Convert to DataFrame for display.
-    matches_df = pd.DataFrame(matches).T.reset_index()
-    matches_df.columns = ['Match Type', 'Count', 'Percentage']
-    matches_df['Percentage'] = matches_df['Percentage'].apply(lambda x: f"{x:.2%}")
-
-    # Apply the mapping to the 'Match Type' column.
-    matches_df['Match Type'] = matches_df['Match Type'].map(match_labels)
-
-    return matches_df
-
-
-# Create a dataframe set of examples of each product category for training data.
-# This will be used for few shot prompting.
-def create_examples_df(data: pd.DataFrame, size: int, is_shuffle: bool = False) -> pd.DataFrame:
-    # Create reviews by extracting all rows by product. Then create examples for each product label.
-    examples = {}
-    for label in labels:
-        reviews = data[data['product'] == label]
-
-        # Sample x rows from each product.
-        examples[label] = create_sample_data(size, reviews)
-
-    labels_list = list(examples.values())
-
-    # Add it to the examples dataframe set.
-    examples_df = pd.concat(labels_list)
-
-    # Shuffle the data one more time if flag is true
-    if is_shuffle == True:
-        examples_df = shuffle_data(examples_df)
-
-    return examples_df
-
-
-
 
 # --- Run Pipelines --- #
 
@@ -182,14 +86,6 @@ def run_main_pipeline(seed_data: bool = False):
     # Load data
 
     df = load_data()
-
-    #MODEL_PATH = init_model()
-
-
-
-
-
-
 
     # Randomly select 30 rows as test data.
     random_data = df.sample(n=config.TEST_DATA_SIZE, random_state=config.SEED)
@@ -227,237 +123,22 @@ def run_main_pipeline(seed_data: bool = False):
     # Extract and return the response text from the generated response.
     #
     # Don't forget to provide a value for the system_message variable before using it in the function.
-    
     """
-
-
-    label_pattern, labels_str = get_labels()
 
     # --- Zero Shot Prompting for Text Classification ---
-    title = 'Zero-Shot Prompting for Text Classification'
-
-    system_message = f"""
-    System: You are an expert text classification model.
-    Your task is to classify a customer complaint into one of the following product categories: {labels_str}.
-    **Only return the category name** and nothing else.
-    If the product category name has a backslash in it, remove it.
-    """
-
-    # Define the template used for prompting the labels.
-    zero_shot_prompt_template = """
-    <s>[INST] {system_message}
-    
-    User Input: {user_input}
-    Category: [/INST]
-    """
-
-
-    # -- @todo
-
-
-    # Set narrative data.
-    df_sample = create_sample_data(config.TEST_DATA_SIZE, df)
-    narratives = df_sample['narrative']
-
-    # Get Zero-shot Mistral response
-    # Takes about 15-20 seconds to run in Jupyter.
-    start_time = start_timer()
-    df_sample ['mistral_response'] = get_zero_shot_mistral_response(narratives)
-    output_timer(start_time, title)
-    print(df_sample['mistral_response'])
-
-    # Get Mistral response and clean it.
-    start_time = start_timer()
-    df_sample['mistral_response_cleaned'] = clean_mistral_response(df_sample['mistral_response'])
-    output_timer(start_time, title)
-    print(df_sample['mistral_response_cleaned'])
-    
-    # Show overview of the sampled data
-    show_overview(df_sample)
-
-
-
-    # Calculate F1 score for 'product' and 'mistral_response' from scikit-learn.
-    product = df_sample['product']
-    mistral_response = df_sample['mistral_response']
-    
-    # Output F1 Mistral score.
-    f1_mistral_response_score = f1_score(product, mistral_response, average='micro')
-
-    # Zero Shot Prompt for Text Classification Results
-    print(f'{title} Results')
-    print(f'F1 Score: {f1_mistral_response_score}')
-
-    # Calculate F1 score for product and mistral_response_cleaned.
-    mistral_response_cleaned = df_sample['mistral_response_cleaned']
-    f1_mistral_response_cleaned_score = f1_score(product, mistral_response_cleaned, average='micro')
-
-    print(f'{title} Results')
-    print(f'F1 Cleaned Score: {f1_mistral_response_cleaned_score}')
-
-
-    # Calculate the delta between F1 Scores of Mistral response and the cleaned version.
-    delta = f1_mistral_response_score - f1_mistral_response_cleaned_score
-    delta = abs(delta)
-    print(f'{title} Delta: {delta}')
-
-    # Display clean table in Jupyter
-    pd.set_option('display.max_colwidth', 256)
-    matches = create_match_results(df_sample)
-    df_matches = display_match_results(matches)
-    display(df_matches)
-
-
-
-
+    run_zero_shot_text_classification()
 
     # --- Few Shot Prompting for Text to Label Classification ---
-    
-    """
-    Generate a set of gold examples by randomly selecting 10 instances of user_input and assistant_output from dataset 
-    ensuring a balanced representation with 2 examples from each class.**
-
-    """
-    # Define title of exercise
-    title = 'Few-Shot Text-to-Label Classification'
-
-    # Create training set data for few shot prompting and create the training set by excluding examples.
-    df_examples = create_examples_df(df, config.PRODUCT_SAMPLE_SIZE)
-    df_gold_examples = df.drop(index=df_examples.index)
-
-    # Convert examples to JSON
-    columns_to_select = ['narrative', 'product']
-    json_examples = df_examples[columns_to_select].to_json(orient='records')
-    print(f'First record from JSON data: {json.loads(json_examples)[0]}')
-
-    # Print the shapes of the datasets.
-    # Note: Gold examples (also called "golden examples" or "ground truth examples") are high-quality, pre-verified
-    # input-output pairs that serve as the "correct" or "ideal" examples for a specific task.
-    print(f'Examples Set Shape: {df_examples.shape}')
-    print(f'Gold Examples Shape: {df_gold_examples.shape}')
-
-
-
-
-
-    """
-    # - Define your **system_message**.
-    # - Define **first_turn_template**, **example_template** and **prediction template**
-    # - **create few shot prompt** using gold examples and system_message
-    # - Randomly select 30 rows from test_df as test_data
-    # - Create **mistral_response** with **mistral_response_cleaned** columns for this
-    """
-
-    labels, label_pattern, labels_str = get_unique_product_labels(df)
-
-    # Few Shot Prompt System Message
-    system_message = f"""
-    System: You are an expert text classification model using few-shot prompting logic.
-    Your task is to classify a customer complaint into financial product categories: {labels_str}.
-    Use the examples provided to help you classify the new user input.
-    Only return the category name (that matches one of the product categories) and **nothing else**.
-    If the category name returns with a backslash in it, remove it!
-    """
-    print(f'few-shot: system_message: {system_message}')
-
-    # Few Shot Templates for Mistral 7B
-
-        # ----- First Turn -----
-    first_turn_template = "<s>[INST]{system_message}\n\n{user_input}[/INST]{assistant_output}</s>"
-
-    # ----- Examples -----
-    examples_template = "<s>[INST]{user_input}[/INST]{assistant_output}</s>"
-
-    # ----- Predictions -----
-    prediction_template = "<s>[INST]{user_input}[/INST]"
-
-    # Get Mistral response for few shot prompt.
-    few_shot_prompt = create_few_shot_prompt(system_message, examples_df)
-    print(few_shot_prompt)
-
-    df_sample = create_sample_data(config.TEST_DATA_SIZE, df_gold_examples)
-    narratives = df_sample['narrative']
-
-    # This line may take a long time to process!
-    start_time = start_timer()
-    df_sample['mistral_response'] = get_few_shot_mistral_response(narratives)
-    output_timer(start_time, title)
-
-    # Few Shot Mistral Response (cleaned).
-    start_time = start_timer()
-    df_sample['mistral_response_cleaned'] = clean_mistral_response(df_sample['mistral_response'])
-    output_timer(start_time, title)
-
-
-    # Few Shot Output
-    # Calculate F1 score for 'product' and 'mistral_response'
-    product = df_sample['product']
-    mistral_response = df_sample['mistral_response']
-    mistral_response_cleaned = df_sample['mistral_response_cleaned']
-
-    # Get F1 score to output
-    f1 = f1_score(product, mistral_response, average='micro')
-    show_banner(title)
-
-    # Results
-    print(f'F1 Score: {f1}')
-
-    # Few-Shot Prompt for Text Classification Results
-    f1_cleaned = f1_score(product, mistral_response_cleaned, average='micro')
-
-
-    # Few Shot Prompt for Text Classification Results
-    print(f'Cleaned F1 Score: {f1_cleaned}')
-
-
-
+    run_few_shot_text_classification()
 
     # --- Text to Text generation ---
     run_zero_shot_text_summarization()
-
-    title = 'Zero-Shot Text Summarization'
-    system_message = """
-    You are an expert summarization tool for financial complaints. Your task is to provide a concise summary (1-3 sentences) of the complaint. The summary should focus on three key points:
-    1. The main problem or core issue.
-    2. The company or companies involved.
-    3. The customer's desired outcome or the current status of the problem.
-    
-    If the complaint text is unclear or incomplete, leave the summary blank.
-    **Only provide the summary.**  Do not provide any additional text.
-    """
-
-    print(f'system_message={system_message}')
-
-    # Zero-Shot prompting for Text Summarization.
-    zero_shot_prompt_template = "<s>[INST] {system_message}User Input: {user_input} [/INST]"
-
-    # Create test data with gold examples for zero shot text-to-text summarization.
-    df_gold_examples = create_sample_data(TEST_DATA_SIZE, df.copy())
-    narratives = df_gold_examples['narrative']
-
-    start_time = start_timer()
-    df_gold_examples['mistral_response'] = get_zero_shot_mistral_response(narratives)
-    output_timer(start_time, title)
-
-    bert_scorer = evaluate.load('bertscore')
-
-    # Get the score for text-to-text summarization.  For this summarization we will use the BERT score.
-    start_time = start_timer()
-    score = evaluate_score(df_gold_examples, bert_scorer, True)
-    output_timer(start_time, title + ' BERT Score')
-
-    print(f'BERT Score: {score}')
 
     # When evaluating Text-To-Text Summarization with the B.E.R.T Score we get a result of 0.320.
     #
     # However, if we add the parameter <code>model_type='distilbert-base-uncased'</code> it jumps to 0.515! The low score is because a zero-shot prompt returns a summary that differs from my gold-standard summaries in the data set. A score of 0.8 would be better.
 
-
-
-    # --- END OF PROGRAM ---
-
-
-
+    # --- END OF PIPELINE PROGRAM ---
 
 
 if __name__ == "__main__":
@@ -484,7 +165,5 @@ if __name__ == "__main__":
     else:
         # Run the main pipeline to execute the text classification and summarization tasks.
         run_main_pipeline()
-
-
 
 # --- End Program --- #

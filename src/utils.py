@@ -10,9 +10,7 @@
 import math
 import re
 import time
-
 import config
-
 
 # Returns shuffle data with entire row set.
 def shuffle_data(df):
@@ -74,3 +72,98 @@ def extract_category(text):
             return match.group()
         else:
             return ''
+
+
+"""
+Product Labels - these are the values in the product column in the dataset.
+Note: We will initialize it here but override once we load the actual data.
+"""
+
+
+def get_labels():
+    product_labels = config.PRODUCT_LABELS
+    label_pattern = '|'.join(product_labels)
+    labels_str = ', '.join(product_labels)
+
+    return label_pattern, labels_str
+
+
+def get_unique_product_labels(data):
+    # Get unique product categories from the dataset.
+    labels = data['product'].unique()
+    label_pattern = '|'.join(labels)
+    labels_str = ', '.join(labels)
+
+    return labels, label_pattern, labels_str
+
+# Create matches matrix to compare values of each column to gauge accuracy.
+def create_match_results(new_data):
+    # Count columns that match per row to compare which results match the actual product.
+    total_rows = new_data.shape[0]
+    print(f'Total Rows: {total_rows}')
+
+    matches = {
+        'product_v_response': {},
+        'product_v_response_cleaned': {},
+        'response_v_response_cleaned': {},
+        'all_3': {}
+    }
+
+    # Count matches
+    matches['product_v_response']['cnt'] = (new_data['product'] == new_data['mistral_response']).sum()
+    matches['product_v_response_cleaned']['cnt'] = (new_data['product'] == new_data['mistral_response_cleaned']).sum()
+    matches['response_v_response_cleaned']['cnt'] = (
+            new_data['mistral_response'] == new_data['mistral_response_cleaned']).sum()
+    matches['all_3']['cnt'] = ((new_data['product'] == new_data['mistral_response']) & (
+            new_data['mistral_response'] == new_data['mistral_response_cleaned'])).sum()
+
+    # Calculate match percentages
+    for key in matches:
+        matches[key]['pct'] = matches[key]['cnt'] / total_rows
+
+    return matches
+
+
+# Convert to DataFrame for display
+def display_match_results(matches):
+    # Define the human-readable labels
+    match_labels = {
+        'product_v_response': 'Product & Mistral Response',
+        'product_v_response_cleaned': 'Product & Cleaned Mistral Response',
+        'response_v_response_cleaned': 'Mistral Response & Cleaned Mistral Response',
+        'all_3': 'Product & Mistral Response & Cleaned Mistral Response'
+    }
+
+    # Convert to DataFrame for display.
+    matches_df = pd.DataFrame(matches).T.reset_index()
+    matches_df.columns = ['Match Type', 'Count', 'Percentage']
+    matches_df['Percentage'] = matches_df['Percentage'].apply(lambda x: f"{x:.2%}")
+
+    # Apply the mapping to the 'Match Type' column.
+    matches_df['Match Type'] = matches_df['Match Type'].map(match_labels)
+
+    return matches_df
+
+
+# Create a dataframe set of examples of each product category for training data.
+# This will be used for few shot prompting.
+def create_examples_df(data: pd.DataFrame, size: int, is_shuffle: bool = False) -> pd.DataFrame:
+    # Create reviews by extracting all rows by product. Then create examples for each product label.
+    examples = {}
+    for label in labels:
+        reviews = data[data['product'] == label]
+
+        # Sample x rows from each product.
+        examples[label] = create_sample_data(size, reviews)
+
+    labels_list = list(examples.values())
+
+    # Add it to the examples dataframe set.
+    examples_df = pd.concat(labels_list)
+
+    # Shuffle the data one more time if flag is true
+    if is_shuffle == True:
+        examples_df = shuffle_data(examples_df)
+
+    return examples_df
+
