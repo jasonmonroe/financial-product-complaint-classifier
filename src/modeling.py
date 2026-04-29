@@ -1,6 +1,5 @@
 # src/modeling.py
 
-
 from src.config import *
 
 from huggingface_hub import hf_hub_download
@@ -137,6 +136,7 @@ def clean_mistral_response(mistral_responses):
     return mistral_responses.apply(lambda x: extract_category(x.replace('\\', '').strip()))
 
 
+# --- Run Prompts --- #
 def run_zero_shot_prompt():
     pass
 
@@ -144,7 +144,13 @@ def run_few_shot_prompt():
     pass
 
 
+def run_few_shot_text_classification():
+    pass
+
 def run_zero_shot_text_summarization():
+    pass
+
+def run_zero_shot_text_classification():
     pass
 
 def evaluate_score(test_data, scorer, bert_score=False):
@@ -192,3 +198,5 @@ def evaluate_score(test_data, scorer, bert_score=False):
 
 def get_bert_score():
     pass
+
+

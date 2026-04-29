@@ -18,13 +18,13 @@ TEST_DATA_SIZE = 30 # Number of rows for testing.
 TRAINING_DATA_SIZE = 50 # Number of rows for training.
 
 # Files
-CONTENT_PATH = '/content/drive/'
-GOOGLE_DRIVE_PATH = 'MyDrive/Colab Notebooks/GA-NLP/project-01/'
+CONTENT_PATH = '/data/'
+# GOOGLE_DRIVE_PATH = 'MyDrive/Colab Notebooks/GA-NLP/project-01/'
 
-csv_file_path = CONTENT_PATH + GOOGLE_DRIVE_PATH
+csv_file_path = CONTENT_PATH
 csv_file_name = 'Complaints_classification.csv'
 
-# Models
+# --- Models
 
 # Define Mistral Attributes
 # @link https://mistral.ai/news/announcing-mistral-7b
@@ -39,7 +39,6 @@ MISTRAL_ATTRS = {
     'top_k': 50,
     'top_p': 0.95,
 }
-
 
 # Define the attributes of the Llama c++ model
 MODEL_ATTRS = {
@@ -57,4 +56,3 @@ MODEL_BASENAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
 # https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF
 MODEL_PATH = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
-

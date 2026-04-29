@@ -8,7 +8,7 @@ import seeder
 
 def load_data(seed_data: bool = False) -> pd.DataFrame:
     # Load the data from the csv file.
-    df = pd.read_csv(csv_file_path + csv_file_name)
+    df = pd.read_csv(config.csv_file_path + config.csv_file_name)
 
     if seed_data:
         seeded_data = seeder.run()
