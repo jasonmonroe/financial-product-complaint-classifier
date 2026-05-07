@@ -41,7 +41,6 @@ def generate_zero_shot_mistral_response(llm: Llama, system_message: str, input_t
     prompt = format_zero_shot_prompt(system_message, input_text, template)
     return generate_prompt_response(llm, prompt)
 
-
 # Apply the mistral response function on every row value in the "narrative" column.
 def get_zero_shot_mistral_response(llm, narratives, system_message: str, template: str):
     return narratives.apply(lambda x: generate_zero_shot_mistral_response(llm, system_message, x, template))
@@ -96,7 +95,6 @@ def generate_few_shot_mistral_response(llm: Llama, few_shot_prompt: str, input_t
     prompt = format_few_shot_prompt(few_shot_prompt, input_text, prediction_template)
     return generate_prompt_response(llm, prompt)
 
-
 # Gets Mistral response for few shot prompts.
 def get_few_shot_mistral_response(llm, narratives, few_shot_context: str, prediction_template: str):
     return narratives.apply(lambda x: generate_few_shot_mistral_response(llm, few_shot_context, x, prediction_template))
@@ -116,7 +114,6 @@ def generate_prompt_response(llm: Llama, prompt: str) -> str:
     )
 
     return response["choices"][0]["text"]
-
 
 def clean_mistral_response(mistral_responses):
     """Applies category extraction and string cleaning to model outputs."""

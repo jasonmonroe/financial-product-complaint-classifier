@@ -3,19 +3,30 @@
 """
 --- Financial Product Complaint Classification and Summarization ---
 
-Description
-In today’s financial landscape, customer complaints offer critical insight into service gaps and operational inefficiencies. Automatically categorizing these complaints into product-specific segments—such as credit reporting, student loans, or money transfers—helps organizations streamline case handling and direct issues to the appropriate teams. By applying Generative AI for text classification and summarization, institutions can better interpret customer concerns and accelerate response workflows. Additionally, generating concise summaries of long complaints enables support teams to quickly understand the core issue without manually parsing lengthy narratives.*
+Description:
+In today’s financial landscape, customer complaints offer critical insight into service gaps and operational
+inefficiencies. Automatically categorizing these complaints into product-specific segments—such as credit reporting,
+student loans, or money transfers—helps organizations streamline case handling and direct issues to the appropriate
+teams. By applying Generative AI for text classification and summarization, institutions can better interpret customer
+concerns and accelerate response workflows. Additionally, generating concise summaries of long complaints enables
+support teams to quickly understand the core issue without manually parsing lengthy narratives.*
 
-Objective
-This project demonstrates how Generative AI techniques can be applied to enhance both the classification and summarization of financial customer complaints. Specifically, it focuses on:*
+Objective:
+This project demonstrates how Generative AI techniques can be applied to enhance both the classification and
+summarization of financial customer complaints. Specifically, it focuses on:*
 
-1. **Text-to-Label Classification:** *Using Zero-shot and Few-shot prompting strategies to assign customer complaints to their correct product categories without requiring traditional supervised training datasets.*
+1. **Text-to-Label Classification:** *Using Zero-shot and Few-shot prompting strategies to assign customer complaints
+to their correct product categories without requiring traditional supervised training datasets.*
 
-2. **Text-to-Text Summarization:** *Applying Zero-shot prompting to produce clear, concise summaries that help support teams rapidly interpret customer issues.*
+2. **Text-to-Text Summarization:** *Applying Zero-shot prompting to produce clear, concise summaries that help support
+teams rapidly interpret customer issues.*
 
-Conclusion
-By completing this project, you will gain hands-on experience developing LLM-driven solutions for text classification and summarization. These capabilities enable financial institutions to automate key aspects of the complaint triage process—resulting in faster routing, more accurate responses, improved customer satisfaction, and enhanced regulatory compliance. The techniques demonstrated here also provide transferable skills applicable across a broad range of real-world NLP and enterprise automation scenarios.*
-
+Conclusion:
+By completing this project, you will gain hands-on experience developing LLM-driven solutions for text classification
+and summarization. These capabilities enable financial institutions to automate key aspects of the complaint triage
+process—resulting in faster routing, more accurate responses, improved customer satisfaction, and enhanced regulatory
+compliance. The techniques demonstrated here also provide transferable skills applicable across a broad range of
+real-world NLP and enterprise automation scenarios.*
 """
 
 # This part of code will skip all the un-necessary warnings which can occur during the execution of this project.
@@ -39,9 +50,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 
 # Local Imports
-from src.config import DISPLAY_WIDTH, TEST_DATA_SIZE
+from src.config import DISPLAY_WIDTH, TEST_DATA_SIZE, PRODUCT_SAMPLE_SIZE
 from src.eda import show_overview
-
 from src.preprocessing import load_data
 from src.utils import *
 from src.modeling import *
@@ -74,8 +84,8 @@ def run_eda_pipeline(seed_data: bool = False):
 
 # Run the main pipeline to execute the text classification and summarization tasks.
 def run_main_pipeline(seed_data: bool = False):
-    # Load data
 
+    # Load data
     df = load_data()
 
     # Importing Libraries and Mistral Model
@@ -133,7 +143,7 @@ def run_main_pipeline(seed_data: bool = False):
     """
 
     # Set narrative data.
-    df_sample = create_sample_data(config.TEST_DATA_SIZE, df)
+    df_sample = create_sample_data(TEST_DATA_SIZE, df)
     narratives = df_sample['narrative']
 
     # Get Zero-shot Mistral response
@@ -198,7 +208,7 @@ def run_main_pipeline(seed_data: bool = False):
     title = 'Few-Shot Text-to-Label Classification'
 
     # Create training set data for few shot prompting and create the training set by excluding examples.
-    df_examples = create_examples_df(df, config.PRODUCT_SAMPLE_SIZE)
+    df_examples = create_examples_df(df, PRODUCT_SAMPLE_SIZE)
     df_gold_examples = df.drop(index=df_examples.index)
 
     # Convert examples to JSON
@@ -220,7 +230,7 @@ def run_main_pipeline(seed_data: bool = False):
     # - Create **mistral_response** with **mistral_response_cleaned** columns for this
     """
 
-    labels, label_pattern, labels_str = get_unique_product_labels(df)
+    _, label_pattern, labels_str = get_unique_product_labels(df)
 
     # Few Shot Prompt System Message
     system_message = f"""
@@ -247,7 +257,7 @@ def run_main_pipeline(seed_data: bool = False):
     few_shot_prompt = create_few_shot_prompt(system_message, df_examples, first_turn_template, examples_template)
     print(few_shot_prompt)
 
-    df_sample = create_sample_data(config.TEST_DATA_SIZE, df_gold_examples)
+    df_sample = create_sample_data(TEST_DATA_SIZE, df_gold_examples)
     narratives = df_sample['narrative']
 
     # This line may take a long time to process!
@@ -350,6 +360,7 @@ if __name__ == "__main__":
     # Run the EDA pipeline to understand the dataset and prepare it for modeling.
     if args.eda:
         run_eda_pipeline()
+
     else:
         # Run the main pipeline to execute the text classification and summarization tasks.
         run_main_pipeline()

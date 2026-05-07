@@ -18,9 +18,9 @@ TEST_DATA_SIZE = 30 # Number of rows for testing.
 TRAINING_DATA_SIZE = 50 # Number of rows for training.
 
 # Files
-CONTENT_PATH = '/data/'
+CONTENT_PATH = 'data/'
 csv_file_path = CONTENT_PATH
-csv_file_name = 'Complaints_classification.csv'
+csv_file_name = 'sample_data.csv'
 
 # --- Models
 
@@ -43,7 +43,7 @@ MODEL_ATTRS = {
     'batch_size': 512,
     'context_window': 4096,
     'cpu_cores': 2,
-    'gpu_layers': 43,
+    'gpu_layers': -1, #43,
     'repeat_penalty': 1.2,
     'temperature': 0,
     'top_p': 0.95
