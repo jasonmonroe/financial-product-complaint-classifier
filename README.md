@@ -1,5 +1,7 @@
-# README.md
-# financial-product-complaint-classifier
+# Financial Product Complaint Classifier
+
+![Hero Image](data/hero.png)
+
 Classifies customer complaints of financial products
 
 ## Description
@@ -69,6 +71,23 @@ metric for text-to-text generation.
 • Execution Flow: The argparse implementation allows for modular execution (running only the EDA or the full pipeline),
 which is standard for enterprise-level CLI tools.
 
+## Project Structure
+
+```text
+customer-review-classifier/
+├── main.py                     # CLI entry point for data seeding, EDA, and model execution
+├── requirements.txt            # Python dependencies
+├── data/                       # Dataset storage
+│   ├── hero.png                # Hero graphic / banner image
+│   └── source_data.csv         # Standard input dataset
+├── src/
+│   ├── config.py               # Application configurations and constants
+│   ├── eda.py                  # Exploratory Data Analysis module
+│   ├── modeling.py             # Model training, prediction, and helper functions
+│   ├── preprocessing.py      # Data loading and cleaning pipelines
+│   ├── seeder.py               # Synthetic dataset generator module
+│   └── utils.py                # Logging, plotting, and common utilities
+└── venv/                       # Virtual environment (git-ignored)
 
 ## Installation
 
