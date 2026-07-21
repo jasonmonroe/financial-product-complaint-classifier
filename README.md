@@ -88,6 +88,7 @@ customer-review-classifier/
 │   ├── seeder.py               # Synthetic dataset generator module
 │   └── utils.py                # Logging, plotting, and common utilities
 └── venv/                       # Virtual environment (git-ignored)
+```
 
 ## Installation
 
